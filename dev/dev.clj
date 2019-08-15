@@ -1,26 +1,30 @@
 (in-ns 'user)
 
-(require '[nrepl.server :refer [start-server stop-server]]
-         '[clojure.java.io :as io])
+;;; Start nREPL server
+(require '[cider.nrepl :as cider]
+         '[nrepl.server :as nrepl])
+(defonce server
+  (nrepl/start-server
+    :handler cider/cider-nrepl-handler))
+;; Spit port number to the file (for Vim+fireplace)
+(let [port (:port server)]
+  (spit ".nrepl-port" port)
+  (println "nREPL server is running on port" port))
 
-(def nrepl-port 7888)
-(defonce nrepl-server (atom nil))
+;;; Start figwheel server
+(require 'figwheel.main.api)
+(figwheel.main.api/start {:mode :serve} "dev")
 
-(defn nrepl-handler []
-  (require 'cider.nrepl)
-  (ns-resolve 'cider.nrepl 'cider-nrepl-handler))
+;;; Start rebel-readline (a REPL by bhauman)
+(require 'rebel-readline.main)
+(rebel-readline.main/-main)   ;; this will block till exit from REPL
 
-(defn start-nrepl-server! []
-  (reset!
-    nrepl-server
-    (start-server :port nrepl-port
-                               :handler (nrepl-handler)))
-  (println "Cider nREPL server started on port" nrepl-port)
-  (spit ".nrepl-port" nrepl-port))
+;;; Remove the port file.
+(require 'clojure.java.io)
+(clojure.java.io/delete-file ".nrepl-port")
 
-(defn stop-nrepl-server! []
-  (when (not (nil? @nrepl-server))
-    (stop-server @nrepl-server)
-    (println "Cider nREPL server on port" nrepl-port "stopped")
-    (reset! nrepl-server nil)
-    (io/delete-file ".nrepl-port" true)))
+;;; We need to exit explicitly because nREPL server is running
+;;; on a different thread.
+;;; `(shutdown-agents)` will do too.
+(println "Bye!")
+(System/exit 0)

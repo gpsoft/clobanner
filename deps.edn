@@ -1,15 +1,19 @@
 {:aliases
-  {:rebel {:main-opts ["-m" "rebel-readline.main"]
-           :extra-paths ["dev"]}
-   }
- :paths ["src" "resources" "target"]
+ {:dev {:main-opts ["./dev/dev.clj"]
+        :extra-paths ["target"]
+        :extra-deps
+        {com.bhauman/rebel-readline {:mvn/version "0.1.4"}
+         com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}
+         nrepl {:mvn/version "0.6.0"}
+         cider/cider-nrepl {:mvn/version "0.21.1"}
+         cider/piggieback {:mvn/version "0.4.1"}}}
+
+  :prod {:main-opts ["-m" "figwheel.main"
+                     "--optimizations" "advanced"
+                     "--build-once" "prod"]}}
+
+ :paths ["src" "resources"]
  :deps
  {org.clojure/clojure {:mvn/version "1.10.1"}
   org.clojure/clojurescript {:mvn/version "1.10.520"}
-  com.bhauman/figwheel-main {:mvn/version "0.2.3"}
-  com.bhauman/rebel-readline {:mvn/version "0.1.4"}
-  com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}
-  ; org.clojure/tools.nrepl {:mvn/version "0.2.13"}
-  nrepl {:mvn/version "0.6.0"}
-  cider/cider-nrepl {:mvn/version "0.21.1"}
-  cider/piggieback {:mvn/version "0.4.1"}}}
+  com.bhauman/figwheel-main {:mvn/version "0.2.3"}}}

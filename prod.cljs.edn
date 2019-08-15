@@ -1,0 +1,2 @@
+{:main clobanner.core
+ :output-to "resources/public/js/clobanner.js"}

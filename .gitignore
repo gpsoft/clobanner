@@ -3,6 +3,7 @@ classes/
 release/
 out/
 work/
+resources/public/js/*.js
 .cpcache/
 .nrepl-history
 .nrepl-port
