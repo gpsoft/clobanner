@@ -7,6 +7,7 @@
         img (.getElementById js/document img-id)]
     {:canvas can :context ctx :image img}))
 (defonce the-canvas (find-canvas "work-canvas" "result-image"))
+(defonce bg-image (atom nil))
 
 (defn- resize!
   [c w h]
@@ -33,6 +34,16 @@
     (set! (.-fillStyle ctx) color)
     (.fillRect ctx 0 0 w h)))
 
+(defn- background!
+  [c color ix iy]
+  (if (nil? @bg-image)
+    (fill! c color)
+    (let [ctx (:context c)
+          [w h] (size c)
+          iw (- (.-width @bg-image) ix)
+          ih (* iw (/ h w))]
+      (.drawImage ctx @bg-image ix iy iw ih 0 0 w h))))
+
 (defn- text!
   ([c x y t font-desc color]
    (text! c x y t font-desc color nil nil))
@@ -55,11 +66,29 @@
         url (.toDataURL can mime)]
     (set! (.-src img) url)))
 
+(defn- load-bg!
+  [fil]
+  (let [fr (js/FileReader.)
+        img (js/Image.)]
+    (set! (.-onload fr)
+          (fn [ev]
+            (set! (.-src img) (aget ev "target" "result"))
+            (reset! bg-image img)))
+    (.readAsDataURL fr fil)))
+
 (doto the-canvas
-  (resize! 600 300)
+  (resize! 1280 670)
   clear!
-  (fill! "#6699cc")
+  (background! "#6699cc" 0 30)
   (text! 100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3)
   (text! 150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff")
   (generate! "image/jpeg"))
+
+(let [f (.getElementById js/document "image-file")]
+  (set! (.-onchange f)
+        (fn [ev]
+          (let [fil (aget ev "target" "files" 0)]
+            (if fil
+              (load-bg! fil)
+              (reset! bg-image nil))))))
 
