@@ -9,6 +9,14 @@
 (defonce the-canvas (find-canvas "work-canvas" "result-image"))
 (defonce bg-image (atom nil))
 
+(def banner {:size [1280 670]
+             :background ["#6699cc" 0 30]
+             :texts [[100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3]
+                     [150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff"]
+                     [1100 250 "λ" "300px 'Consolas'" "#63b132"]
+                     [100 600 (str \u263a) "bold 180px 'sans-serif'" "#90b4fe" "#000000"]]
+             :mime "image/png"})
+
 (defn- resize!
   [c w h]
   (let [can (:canvas c)]
@@ -59,12 +67,20 @@
        (set! (.-lineWidth ctx) w)
        (.strokeText ctx t x y)))))
 
-(defn- generate!
+(defn- export!
   [c mime]
   (let [can (:canvas c)
         img (:image c)
         url (.toDataURL can mime)]
     (set! (.-src img) url)))
+
+(defn- generate!
+  [{:keys [size background texts mime] :as banner}]
+  (apply resize! the-canvas size)
+  (clear! the-canvas)
+  (apply background! the-canvas background)
+  (dorun (map #(apply text! the-canvas %) texts))
+  (export! the-canvas mime))
 
 (defn- load-bg!
   [fil]
@@ -74,15 +90,8 @@
           (fn [ev]
             (set! (.-src img) (aget ev "target" "result"))
             (reset! bg-image img)))
+    (set! (.-onload img) #(generate! banner))
     (.readAsDataURL fr fil)))
-
-(doto the-canvas
-  (resize! 1280 670)
-  clear!
-  (background! "#6699cc" 0 30)
-  (text! 100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3)
-  (text! 150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff")
-  (generate! "image/jpeg"))
 
 (let [f (.getElementById js/document "image-file")]
   (set! (.-onchange f)
@@ -92,3 +101,4 @@
               (load-bg! fil)
               (reset! bg-image nil))))))
 
+(generate! banner)
