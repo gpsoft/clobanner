@@ -8,7 +8,10 @@
 	</head>
 	<body>
 		<div id="app">
-			<input type="file" id="image-file">
+			<div class="bg-image-file-btn">
+				背景画像ファイル
+				<input type="file" id="image-file" accept="image/*">
+			</div>
 			<div><canvas id="work-canvas" style="display:none"></canvas></div>
 			<div><img id="result-image" src="" width="600" style="border:solid 1px #888"></div>
 		</div>

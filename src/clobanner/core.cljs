@@ -1,14 +1,11 @@
-(ns clobanner.core)
+(ns clobanner.core
+  (:require
+    [cljs.core.async :refer [chan <! >!]]
+    [clobanner.utils :as u])
+  (:require-macros
+    [cljs.core.async.macros :refer [go go-loop]]))
 
-(defn- find-canvas
-  [canvas-id img-id]
-  (let [can (.getElementById js/document canvas-id)
-        ctx (.getContext can "2d")
-        img (.getElementById js/document img-id)]
-    {:canvas can :context ctx :image img}))
-(defonce the-canvas (find-canvas "work-canvas" "result-image"))
-(defonce bg-image (atom nil))
-
+;; Initial (sample) banner.
 (def banner {:size [1280 670]
              :background ["#6699cc" 0 30]
              :texts [[100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3]
@@ -17,6 +14,33 @@
                      [100 600 (str \u263a) "bold 180px 'sans-serif'" "#90b4fe" "#000000"]]
              :mime "image/png"})
 
+(declare generate! load-image-file!)
+
+;; Canvas and composed image.
+(defonce the-canvas
+  (let [can (u/dom "work-canvas")
+        ctx (.getContext can "2d")
+        img (u/dom "result-image")]
+    {:canvas can :context ctx :image img}))
+
+;; Keep re-generating image.
+(defonce bg-image-chan (chan))
+(go-loop []
+  (when-let [img (<! bg-image-chan)]
+    (generate! banner img)
+    (recur)))
+
+;; Keep watching background image file.
+(let [ch (chan)
+      f (u/dom "image-file")]
+  (u/monitor-event f "onchange" ch)
+  (go-loop []
+    (when-let [ev (<! ch)]
+      (let [fil (aget ev "target" "files" 0)]
+        (load-image-file! fil))
+      (recur))))
+
+;; Operations for canvas
 (defn- resize!
   [c w h]
   (let [can (:canvas c)]
@@ -43,14 +67,14 @@
     (.fillRect ctx 0 0 w h)))
 
 (defn- background!
-  [c color ix iy]
-  (if (nil? @bg-image)
+  [c img color ix iy]
+  (if (= img :no-image)
     (fill! c color)
     (let [ctx (:context c)
           [w h] (size c)
-          iw (- (.-width @bg-image) ix)
+          iw (- (.-width img) ix)
           ih (* iw (/ h w))]
-      (.drawImage ctx @bg-image ix iy iw ih 0 0 w h))))
+      (.drawImage ctx img ix iy iw ih 0 0 w h))))
 
 (defn- text!
   ([c x y t font-desc color]
@@ -67,7 +91,7 @@
        (set! (.-lineWidth ctx) w)
        (.strokeText ctx t x y)))))
 
-(defn- export!
+(defn- compose!
   [c mime]
   (let [can (:canvas c)
         img (:image c)
@@ -75,30 +99,25 @@
     (set! (.-src img) url)))
 
 (defn- generate!
-  [{:keys [size background texts mime] :as banner}]
+  [{:keys [size background texts mime] :as banner} img]
   (apply resize! the-canvas size)
   (clear! the-canvas)
-  (apply background! the-canvas background)
+  (apply background! the-canvas img background)
   (dorun (map #(apply text! the-canvas %) texts))
-  (export! the-canvas mime))
+  (compose! the-canvas mime))
 
-(defn- load-bg!
+(defn- load-image-file!
   [fil]
   (let [fr (js/FileReader.)
-        img (js/Image.)]
-    (set! (.-onload fr)
-          (fn [ev]
-            (set! (.-src img) (aget ev "target" "result"))
-            (reset! bg-image img)))
-    (set! (.-onload img) #(generate! banner))
-    (.readAsDataURL fr fil)))
+        img (js/Image.)
+        ch (chan)]
+    (u/monitor-event fr "onload" ch)
+    (u/monitor-event img "onload" ch)
+    (go
+      (.readAsDataURL fr fil)
+      (when-let [ev (<! ch)]
+        (set! (.-src img) (aget ev "target" "result"))
+        (<! ch)
+        (>! bg-image-chan img)))))
 
-(let [f (.getElementById js/document "image-file")]
-  (set! (.-onchange f)
-        (fn [ev]
-          (let [fil (aget ev "target" "files" 0)]
-            (if fil
-              (load-bg! fil)
-              (reset! bg-image nil))))))
-
-(generate! banner)
+(generate! banner :no-image)
