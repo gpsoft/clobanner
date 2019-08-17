@@ -8,12 +8,15 @@
 	</head>
 	<body>
 		<div id="app">
+			<h1 class="title">Clobanner</h1>
+			<p class="lead">手軽にバナー画像を作ろう。</p>
+			<div><textarea id="banner-declaration" class="banner-declaration"></textarea></div>
 			<div class="bg-image-file-btn">
 				背景画像ファイル
-				<input type="file" id="image-file" accept="image/*">
+				<input type="file" id="bg-image-file" accept="image/*">
 			</div>
 			<div><canvas id="work-canvas" style="display:none"></canvas></div>
-			<div><img id="result-image" src="" width="600" style="border:solid 1px #888"></div>
+			<div class="result-image-wrap"><img id="result-image" src="" width="600"></div>
 		</div>
 		<script type="text/javascript" src="cljs-out/dev-main.js"></script>
 	</body>

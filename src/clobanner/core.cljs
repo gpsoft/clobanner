@@ -1,9 +1,13 @@
 (ns clobanner.core
   (:require
+    [cljs.pprint :as pp]
+    [clojure.edn :as edn]
     [cljs.core.async :refer [chan <! >!]]
     [clobanner.utils :as u])
   (:require-macros
     [cljs.core.async.macros :refer [go go-loop]]))
+
+(declare generate! load-image-file! read!)
 
 ;; Initial (sample) banner.
 (def banner {:size [1280 670]
@@ -13,8 +17,8 @@
                      [1100 250 "λ" "300px 'Consolas'" "#63b132"]
                      [100 600 (str \u263a) "bold 180px 'sans-serif'" "#90b4fe" "#000000"]]
              :mime "image/png"})
-
-(declare generate! load-image-file!)
+(set! (.-value (u/dom "banner-declaration"))
+      (with-out-str (pp/pprint banner)))
 
 ;; Canvas and composed image.
 (defonce the-canvas
@@ -27,17 +31,25 @@
 (defonce bg-image-chan (chan))
 (go-loop []
   (when-let [img (<! bg-image-chan)]
-    (generate! banner img)
+    (generate! (read!) img)
     (recur)))
 
 ;; Keep watching background image file.
 (let [ch (chan)
-      f (u/dom "image-file")]
+      f (u/dom "bg-image-file")]
   (u/monitor-event f "onchange" ch)
   (go-loop []
     (when-let [ev (<! ch)]
-      (let [fil (aget ev "target" "files" 0)]
-        (load-image-file! fil))
+      (load-image-file!)
+      (recur))))
+
+;; Keep watching banner declaration.
+(let [ch (chan)
+      ta (u/dom "banner-declaration")]
+  (u/monitor-event ta "oninput" ch)
+  (go-loop []
+    (when-let [ev (<! ch)]
+      (load-image-file!)
       (recur))))
 
 ;; Operations for canvas
@@ -99,25 +111,31 @@
     (set! (.-src img) url)))
 
 (defn- generate!
-  [{:keys [size background texts mime] :as banner} img]
-  (apply resize! the-canvas size)
-  (clear! the-canvas)
-  (apply background! the-canvas img background)
-  (dorun (map #(apply text! the-canvas %) texts))
-  (compose! the-canvas mime))
+  [{:keys [size background texts mime] :as b} img]
+  (when b
+    (apply resize! the-canvas size)
+    (clear! the-canvas)
+    (apply background! the-canvas img background)
+    (dorun (map #(apply text! the-canvas %) texts))
+    (compose! the-canvas mime)))
 
 (defn- load-image-file!
-  [fil]
-  (let [fr (js/FileReader.)
-        img (js/Image.)
-        ch (chan)]
-    (u/monitor-event fr "onload" ch)
-    (u/monitor-event img "onload" ch)
-    (go
-      (.readAsDataURL fr fil)
-      (when-let [ev (<! ch)]
-        (set! (.-src img) (aget ev "target" "result"))
-        (<! ch)
-        (>! bg-image-chan img)))))
+  []
+  (if-let [fil (aget (u/dom "bg-image-file") "files" 0)]
+    (let [fr (js/FileReader.)
+          img (js/Image.)
+          ch (chan)]
+      (u/monitor-event fr "onload" ch)
+      (u/monitor-event img "onload" ch)
+      (go
+        (.readAsDataURL fr fil)
+        (when-let [ev (<! ch)]
+          (set! (.-src img) (aget ev "target" "result"))
+          (<! ch)
+          (>! bg-image-chan img))))))
 
-(generate! banner :no-image)
+(defn- read!
+  []
+  (edn/read-string (.-value (u/dom "banner-declaration"))))
+
+(generate! (read!) :no-image)
