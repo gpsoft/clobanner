@@ -2,7 +2,7 @@
   (:require
     [cljs.pprint :as pp]
     [clojure.edn :as edn]
-    [cljs.core.async :refer [chan <! >!]]
+    [cljs.core.async :refer [chan put! <! >!]]
     [clobanner.utils :as u])
   (:require-macros
     [cljs.core.async.macros :refer [go go-loop]]))
@@ -132,10 +132,12 @@
         (when-let [ev (<! ch)]
           (set! (.-src img) (aget ev "target" "result"))
           (<! ch)
-          (>! bg-image-chan img))))))
+          (>! bg-image-chan img))))
+    (put! bg-image-chan :no-image)))
 
 (defn- read!
   []
   (edn/read-string (.-value (u/dom "banner-declaration"))))
 
-(generate! (read!) :no-image)
+(put! bg-image-chan :no-image)
+#_(generate! (read!) :no-image)
