@@ -1,0 +1,64 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+body {
+	padding: 16px;
+}
+
+h1, p {
+	margin-bottom: 4px;
+}
+
+.title {
+	font: bold 20px sans-serif;
+	line-height: 1em;
+}
+
+.lead {
+	font: 14px serif;
+	padding-left: 1em;
+}
+
+.banner-declaration {
+	font: 14px monospace;
+	width: 600px;
+	height: 150px;
+}
+.banner-declaration.error {
+	border: solid 2px #ff0000;
+	outline-color: #ff0000;
+}
+
+.bg-image-file-btn {
+	position: relative;
+	display: inline-block;
+	margin: 4px 0;
+	padding: 4px;
+	border: solid 1px #000000;
+}
+.bg-image-file-btn:hover {
+	background-color: #eeeeee;
+}
+.bg-image-file-btn input[type="file"] {
+	position: absolute;
+	opacity: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	cursor: pointer;
+}
+
+.result-image-wrap {
+	box-sizing: content-box;
+	width: 600px;
+	padding: 1px;
+	min-height: 200px;
+	border: solid 2px #888888;
+}
+.result-image-wrap img {
+	display: block;
+}
