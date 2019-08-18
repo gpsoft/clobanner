@@ -27,6 +27,10 @@ h1, p {
 	width: 600px;
 	height: 150px;
 }
+.banner-declaration.error {
+	border: solid 2px #ff0000;
+	outline-color: #ff0000;
+}
 
 .bg-image-file-btn {
 	position: relative;

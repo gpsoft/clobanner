@@ -137,7 +137,15 @@
 
 (defn- read!
   []
-  (edn/read-string (.-value (u/dom "banner-declaration"))))
+  (let [bd (u/dom "banner-declaration")]
+    (try
+      (.remove (.-classList bd) "error")
+      (edn/read-string (.-value bd))
+      ;; TODO: should use spec here?
+      (catch :default e
+        (.add (.-classList bd) "error")
+        (println (ex-data e))
+        nil))))
 
 (put! bg-image-chan :no-image)
 #_(generate! (read!) :no-image)
