@@ -38,7 +38,7 @@ Vimで`core.cljs`を開いて、nREPLサーバと接続しCLJS REPLセッショ�
 TODO:
 
 - バナー画像情報ednのspecチェック
-- 背景画像の合成を柔軟にする
+- リアルタイム更新をdisableする機能
 
 # リリース
 

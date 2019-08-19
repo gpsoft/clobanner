@@ -11,7 +11,7 @@
 
 ;; Initial (sample) banner.
 (def banner {:size [1280 670]
-             :background ["#6699cc" 0 30]
+             :background ["#6699cc"]
              :texts [[100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3]
                      [150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff"]
                      [1100 250 "λ" "300px 'Consolas'" "#63b132"]
@@ -78,15 +78,43 @@
     (set! (.-fillStyle ctx) color)
     (.fillRect ctx 0 0 w h)))
 
+(defn- calc-bg-param
+  [sx sy sw sh-max dx dy dw dh-max]
+  (let [sh (* sw (/ dh-max dw))
+        sh (min sh sh-max)
+        dh (* dw (/ sh sw))
+        dh (min dh dh-max)]
+    [sx sy sw sh dx dy dw dh]))
+
 (defn- background!
-  [c img color ix iy]
-  (if (= img :no-image)
-    (fill! c color)
-    (let [ctx (:context c)
-          [w h] (size c)
-          iw (- (.-width img) ix)
-          ih (* iw (/ h w))]
-      (.drawImage ctx img ix iy iw ih 0 0 w h))))
+  ([c img color]
+   (let [sw (.-width img)
+         [dw dh] (size c)]
+     (background! c img color 0 0 sw 0 0 dw dh)))
+  ([c img color sx sy]
+   (let [sw (- (.-width img) sx)
+         [dw dh] (size c)]
+     (background! c img color sx sy sw 0 0 dw dh)))
+  ([c img color sx sy sw]
+   (let [[dw dh] (size c)]
+     (background! c img color sx sy sw 0 0 dw dh)))
+  ([c img color sx sy sw dx dy]
+   (let [[dw dh] (size c)
+         dw (- dw dx)
+         dh (- dh dy)]
+     (background! c img color sx sy sw dx dy dw dh)))
+  ([c img color sx sy sw dx dy dw]
+   (let [[_ dh] (size c)
+         dh (- dh dy)]
+     (background! c img color sx sy sw dx dy dw dh)))
+  ([c img color sx sy sw dx dy dw dh-max]
+   (fill! c color)
+   (when (not= img :no-image)
+     (let [ctx (:context c)
+           sh (-  (.-height img) sy)
+           [sx sy sw sh dx dy dw dh]
+           (calc-bg-param sx sy sw sh dx dy dw dh-max)]
+       (.drawImage ctx img sx sy sw sh dx dy dw dh)))))
 
 (defn- text!
   ([c x y t font-desc color]
@@ -110,14 +138,25 @@
         url (.toDataURL can mime)]
     (set! (.-src img) url)))
 
+(defn- toggle-declaration-error
+  [err?]
+  (let [bd (u/dom "banner-declaration")]
+    (.toggle (.-classList bd) "error" err?)))
+
 (defn- generate!
   [{:keys [size background texts mime] :as b} img]
   (when b
-    (apply resize! the-canvas size)
-    (clear! the-canvas)
-    (apply background! the-canvas img background)
-    (dorun (map #(apply text! the-canvas %) texts))
-    (compose! the-canvas mime)))
+    (try
+      (apply resize! the-canvas size)
+      (clear! the-canvas)
+      (apply background! the-canvas img background)
+      (dorun (map #(apply text! the-canvas %) texts))
+      (compose! the-canvas mime)
+      nil
+      (catch :default e
+        (toggle-declaration-error true)
+        #_(println (ex-data e))
+        nil))))
 
 (defn- load-image-file!
   []
@@ -139,13 +178,12 @@
   []
   (let [bd (u/dom "banner-declaration")]
     (try
-      (.remove (.-classList bd) "error")
+      (toggle-declaration-error false)
       (edn/read-string (.-value bd))
       ;; TODO: should use spec here?
       (catch :default e
-        (.add (.-classList bd) "error")
-        (println (ex-data e))
+        (toggle-declaration-error true)
+        #_(println (ex-data e))
         nil))))
 
 (put! bg-image-chan :no-image)
-#_(generate! (read!) :no-image)
