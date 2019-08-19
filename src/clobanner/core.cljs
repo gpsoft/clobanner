@@ -138,7 +138,7 @@
         url (.toDataURL can mime)]
     (set! (.-src img) url)))
 
-(defn- toggle-declaration-error
+(defn- toggle-declaration-error!
   [err?]
   (let [bd (u/dom "banner-declaration")]
     (.toggle (.-classList bd) "error" err?)))
@@ -154,7 +154,7 @@
       (compose! the-canvas mime)
       nil
       (catch :default e
-        (toggle-declaration-error true)
+        (toggle-declaration-error! true)
         #_(println (ex-data e))
         nil))))
 
@@ -164,6 +164,7 @@
     (let [fr (js/FileReader.)
           img (js/Image.)
           ch (chan)]
+      (set! (.-textContent (u/dom "image-file-name")) (.-name fil))
       (u/monitor-event fr "onload" ch)
       (u/monitor-event img "onload" ch)
       (go
@@ -172,17 +173,19 @@
           (set! (.-src img) (aget ev "target" "result"))
           (<! ch)
           (>! bg-image-chan img))))
-    (put! bg-image-chan :no-image)))
+    (do
+      (set! (.-textContent (u/dom "image-file-name")) "")
+      (put! bg-image-chan :no-image))))
 
 (defn- read!
   []
   (let [bd (u/dom "banner-declaration")]
     (try
-      (toggle-declaration-error false)
+      (toggle-declaration-error! false)
       (edn/read-string (.-value bd))
       ;; TODO: should use spec here?
       (catch :default e
-        (toggle-declaration-error true)
+        (toggle-declaration-error! true)
         #_(println (ex-data e))
         nil))))
 

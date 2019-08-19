@@ -11,9 +11,12 @@
 			<h1 class="title">Clobanner</h1>
 			<p class="lead">手軽にバナー画像を作ろう。</p>
 			<div><textarea id="banner-declaration" class="banner-declaration"></textarea></div>
-			<div class="bg-image-file-btn">
-				背景画像ファイル
-				<input type="file" id="bg-image-file" accept="image/*">
+			<div>
+				<div class="bg-image-file-btn">
+					背景画像ファイル
+					<input type="file" id="bg-image-file" accept="image/*">
+				</div>
+				<span id="image-file-name"></span>
 			</div>
 			<div><canvas id="work-canvas" style="display:none"></canvas></div>
 			<div class="result-image-wrap"><img id="result-image" src="" width="600"></div>
