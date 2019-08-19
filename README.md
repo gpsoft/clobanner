@@ -9,6 +9,21 @@
 
 ![clobanner](clobanner.png)
 
+`:background`のパターンは:
+
+- `[color]`
+- `[color sx sy]`
+- `[color sx sy sw]`
+- `[color sx sy sw dx dy]`
+- `[color sx sy sw dx dy dw]`
+- `[color sx sy sw dx dy dw dh]`
+
+`color`は背景色、`s*`は背景画像ファイルのどこを切り取るか、`d*`はキャンバスのどこに貼るかを指定。`sh`は指定不可。
+
+`texts`の中の各テキストには、X座標、Y座標、出力文字列、フォント情報(cssのfont相当)、文字色、文字の縁の色、文字の縁の太さを指定。文字の縁に関する情報は省略可能。
+
+`:mime`は、出力する画像のMIMEタイプ。
+
 # 開発
 
 使うツールは:
