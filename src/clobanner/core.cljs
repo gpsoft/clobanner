@@ -125,11 +125,11 @@
    (let [ctx (:context c)]
      (set! (.-fillStyle ctx) color)
      (set! (.-font ctx) font-desc)
-     (.fillText ctx t x y)
      (when edge
        (set! (.-strokeStyle ctx) edge)
        (set! (.-lineWidth ctx) w)
-       (.strokeText ctx t x y)))))
+       (.strokeText ctx t x y))
+     (.fillText ctx t x y))))
 
 (defn- compose!
   [c mime]
