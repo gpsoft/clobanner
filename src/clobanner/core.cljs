@@ -12,6 +12,8 @@
 ;; Initial (sample) banner.
 (def banner {:size [1280 670]
              :background ["#6699cc"]
+             :rects [[156 210 28 48 "#66cc44"]
+                     [160 265 400 10 "#ff0000" "#ffffff88" 8]]
              :texts [[100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3]
                      [150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff"]
                      [1100 250 "λ" "300px 'Consolas'" "#63b132"]
@@ -131,6 +133,20 @@
        (.strokeText ctx t x y))
      (.fillText ctx t x y))))
 
+(defn- rect!
+  ([c x y w h color]
+   (rect! c x y w h color nil nil))
+  ([c x y w h color edge]
+   (rect! c x y w h color edge 1))
+  ([c x y w h color edge ew]
+   (let [ctx (:context c)]
+     (set! (.-fillStyle ctx) color)
+     (when edge
+       (set! (.-strokeStyle ctx) edge)
+       (set! (.-lineWidth ctx) ew)
+       (.strokeRect ctx x y w h))
+     (.fillRect ctx x y w h))))
+
 (defn- compose!
   [c mime]
   (let [can (:canvas c)
@@ -144,12 +160,13 @@
     (.toggle (.-classList bd) "error" err?)))
 
 (defn- generate!
-  [{:keys [size background texts mime] :as b} img]
+  [{:keys [size background rects texts mime] :as b} img]
   (when b
     (try
       (apply resize! the-canvas size)
       (clear! the-canvas)
       (apply background! the-canvas img background)
+      (dorun (map #(apply rect! the-canvas %) rects))
       (dorun (map #(apply text! the-canvas %) texts))
       (compose! the-canvas mime)
       nil
@@ -190,3 +207,12 @@
         nil))))
 
 (put! bg-image-chan :no-image)
+(comment
+  the-canvas
+  (:context the-canvas)
+  (set! (.-fillStyle (:context the-canvas)) "#ffffff")
+  (set! (.-strokeStyle (:context the-canvas)) "#ffffff")
+  (.fillRect (:context the-canvas) 5 205 300 150)
+  (.fillText (:context the-canvas) "yo" 5 5)
+  (js/alert "hey")
+  )
