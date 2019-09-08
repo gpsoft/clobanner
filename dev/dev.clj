@@ -1,5 +1,13 @@
 (in-ns 'user)
 
+;;; CLJS REPL
+(require 'rebel-readline.cljs.repl
+         'figwheel.main.api)
+(defn cljs-repl
+  []
+  (let [repl-env (figwheel.main.api/repl-env "dev")]
+    (rebel-readline.cljs.repl/repl repl-env)))
+
 ;;; Start nREPL server
 (require '[cider.nrepl :as cider]
          '[nrepl.server :as nrepl])
@@ -12,7 +20,6 @@
   (println "nREPL server is running on port" port))
 
 ;;; Start figwheel server
-(require 'figwheel.main.api)
 (figwheel.main.api/start {:mode :serve} "dev")
 
 ;;; Start rebel-readline (a REPL by bhauman)
