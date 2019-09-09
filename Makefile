@@ -29,7 +29,6 @@ rel:
 	git co gh-pages
 	git co master -- resources/public/
 	git rm -r --cached resources
-	rm resources/public/index-dev.html
 	cp -ru resources/public/* .
 	git com -am "Deploy app"
 	git clean -fd

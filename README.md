@@ -44,7 +44,7 @@
 
     $ clojure -Adev
 
-デフォルトのブラウザで、`http://localhost:9500/index-dev.html`が開くはず(開かなければ手動で)。この時点でfigwheelとつながり、自動ビルド&リロードがONになる。
+デフォルトのブラウザで、`http://localhost:9500/index.html`が開くはず(開かなければ手動で)。この時点でfigwheelとつながり、自動ビルド&リロードがONになる。
 
 Vimで`core.cljs`を開いて、nREPLサーバと接続しCLJS REPLセッションを開始:
 
