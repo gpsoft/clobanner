@@ -52,12 +52,20 @@ h1, p {
 	cursor: pointer;
 }
 
+.btn {
+	color: #000;
+	border: 2px solid #D7341E;
+	background-color: #FFADA2;
+	line-height: 24px;
+}
+
 .result-image-wrap {
 	box-sizing: content-box;
 	width: 600px;
 	padding: 1px;
 	min-height: 200px;
 	border: solid 2px #888888;
+	margin-bottom: 4px;
 }
 .result-image-wrap img {
 	display: block;

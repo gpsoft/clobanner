@@ -3,24 +3,25 @@
     [cljs.pprint :as pp]
     [clojure.edn :as edn]
     [cljs.core.async :refer [chan put! <! >!]]
+    [clobanner.db :as db]
     [clobanner.utils :as u])
   (:require-macros
     [cljs.core.async.macros :refer [go go-loop]]))
 
-(declare generate! load-image-file! read!)
+(declare generate! load-image-file! read! save-banner! load-banner! del-banner!)
 
 ;; Initial (sample) banner.
-(def banner {:size [1280 670]
-             :background ["#6699cc"]
-             :rects [[156 210 28 48 "#66cc44"]
-                     [160 265 400 10 "#ff0000" "#ffffff88" 8]]
-             :texts [[100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3]
-                     [150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff"]
-                     [1100 250 "λ" "300px 'Consolas'" "#63b132"]
-                     [100 600 (str \u263a) "bold 180px 'sans-serif'" "#90b4fe" "#000000"]]
-             :mime "image/png"})
-(set! (.-value (u/dom "banner-declaration"))
-      (with-out-str (pp/pprint banner)))
+(def initial-banner
+  {:name "sample1"
+   :size [1280 670]
+   :background ["#6699cc"]
+   :rects [[156 210 28 48 "#66cc44"]
+           [160 265 400 10 "#ff0000" "#ffffff88" 8]]
+   :texts [[100 150 "Hey" "bold 80px 'monospace'" "#ff0000" "#ffffff" 3]
+           [150 250 "よろしくお願いします。" "bold 40px 'serif'" "#ffffff"]
+           [1100 250 "λ" "300px 'Consolas'" "#63b132"]
+           [100 600 (str \u263a) "bold 180px 'sans-serif'" "#90b4fe" "#000000"]]
+   :mime "image/png"})
 
 ;; Canvas and composed image.
 (defonce the-canvas
@@ -36,23 +37,21 @@
     (generate! (read!) img)
     (recur)))
 
-;; Keep watching background image file.
-(let [ch (chan)
-      f (u/dom "bg-image-file")]
-  (u/monitor-event f "onchange" ch)
-  (go-loop []
-    (when-let [ev (<! ch)]
-      (load-image-file!)
-      (recur))))
-
-;; Keep watching banner declaration.
-(let [ch (chan)
-      ta (u/dom "banner-declaration")]
-  (u/monitor-event ta "oninput" ch)
-  (go-loop []
-    (when-let [ev (<! ch)]
-      (load-image-file!)
-      (recur))))
+;; Event hooks
+(defn- listen!
+  [id prop f]
+  (let [ch (chan)
+        el (u/dom id)]
+    (u/monitor-event el prop ch)
+    (go-loop []
+      (when-let [ev (<! ch)]
+        (f)
+        (recur)))))
+(listen! "bg-image-file" "onchange" load-image-file!)
+(listen! "banner-declaration" "onchange" load-image-file!)
+(listen! "save-btn" "onclick" save-banner!)
+(listen! "del-btn" "onclick" del-banner!)
+(listen! "load-btn" "onclick" load-banner!)
 
 ;; Operations for canvas
 (defn- resize!
@@ -206,7 +205,47 @@
         #_(println (ex-data e))
         nil))))
 
-(put! bg-image-chan :no-image)
+(defn- reset-banner!
+  [banner]
+  (when banner
+    (set! (.-value (u/dom "banner-declaration"))
+          (with-out-str (pp/pprint banner)))
+    (put! bg-image-chan :no-image)))
+
+(defn- dir-banners!
+  []
+  (when-let [names (db/dir)]
+    (println names)))
+
+(defn- save-banner!
+  []
+  (let [banner (read!)]
+    (if-let [name (:name banner)]
+      (when (js/confirm (str "\"" name "\"をローカルストレージへ保存します。"))
+        (db/upsert! name banner)
+        (dir-banners!))
+      (js/alert "保存するには、:nameキーが必要です。"))))
+
+(defn- del-banner!
+  []
+  (if-let [name (:name (read!))]
+    (when (js/confirm (str "\"" name "\"をローカルストレージから削除します。"))
+      (db/remove! name)
+      (dir-banners!))
+    (js/alert "削除するには、:nameキーが必要です。")))
+
+(defn- load-banner!
+  []
+  (if-let [name (:name (read!))]
+    (when (js/confirm (str "\"" name "\"をローカルストレージからロードします。"))
+      (-> name
+          db/query
+          reset-banner!))
+    (js/alert "ロードするには、:nameキーが必要です。")))
+
+(reset-banner! initial-banner)
+(dir-banners!)
+
 (comment
   the-canvas
   (:context the-canvas)

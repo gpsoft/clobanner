@@ -57,7 +57,6 @@ TODO:
 - バナー画像情報ednのspecチェック
 - リアルタイム更新をdisableする機能
 - use re-frame?
-- localStorageにストック
 
 # リリース
 
