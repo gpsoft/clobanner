@@ -23,17 +23,29 @@ dev:
 prod:
 	clojure -A:prod
 
+# Release to gh-pages
+# Preparation:
+#   $ git co -b gh-pages
+#   $ git clean -fd
+#   $ git rm EVERYTHING
+#   $ rm -rf EVERYTHING
+#   $ git com -m "Remove all files"
+# Usage:
+#   $ make prod
+#   $ make rel
 rel:
 	echo "Releasing the product to GitHub..."
 	scripts/prerelease.sh
 	git co gh-pages
 	git co master -- resources/public/
 	git rm -r --cached resources
-	cp -ru resources/public/* .
-	git com -am "Deploy app"
+	cp -r resources/public/* .
+	git add index.html img css js
+	git com -m "Deploy app"
+	git ll
 	git clean -fd
 	git co master
-	echo "Ready to release with: git push github gh-pages:gh-pages"
+	echo "Ready to release with: git push github gh-pages"
 
 %:
 	@:
