@@ -10,3 +10,11 @@
 (defn monitor-event
   [target prop ch]
   (aset target prop #(put! ch %)))
+
+(defn base64encode
+  [s]
+  ;; Not sure it's correct.
+  (-> s
+      (js/encodeURIComponent)
+      (js/unescape)
+      (js/btoa)))

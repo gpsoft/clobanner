@@ -52,6 +52,7 @@
 (listen! "save-btn" "onclick" save-banner!)
 (listen! "del-btn" "onclick" del-banner!)
 (listen! "load-btn" "onclick" load-banner!)
+(listen! "bak-btn" "onclick" db/backup!)
 
 ;; Operations for canvas
 (defn- resize!

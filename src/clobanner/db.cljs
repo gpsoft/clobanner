@@ -35,3 +35,15 @@
     (->> (dissoc db [name])
          prn-str
          (.setItem js/localStorage ls-key))))
+
+(defn backup!
+  []
+  (when-let [db-str (.getItem js/localStorage ls-key)]
+    (let [data (u/base64encode db-str)
+          href (str "data:application/edn;charset=utf-8;base64," data)
+          a (.createElement js/document "a")]
+      (.setAttribute a "download" "clobanner.edn")
+      (.setAttribute a "href" href)
+      (.appendChild (u/dom "local-storage") a)
+      (.click a)
+      (.remove a))))
